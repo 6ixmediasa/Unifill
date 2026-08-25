@@ -1,0 +1,2 @@
+import React,{useState} from 'react';import {View} from 'react-native';import {BannerAd,BannerAdSize} from 'react-native-google-mobile-ads';import {adIds} from '@/src/services/ads';
+export function AdBanner(){const [bad,setBad]=useState(false);if(bad)return null;return <View style={{alignItems:'center',minHeight:0,overflow:'hidden'}}><BannerAd unitId={adIds.banner} size={BannerAdSize.ANCHORED_ADAPTIVE_BANNER} onAdFailedToLoad={()=>setBad(true)}/></View>}
