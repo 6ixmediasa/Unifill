@@ -16,11 +16,6 @@ export default ({ config }: ConfigContext): ExpoConfig => {
     orientation: 'portrait',
     userInterfaceStyle: 'automatic',
     icon: './assets/icon.png',
-    splash: {
-      image: './assets/splash-icon.png',
-      resizeMode: 'contain',
-      backgroundColor: '#F7F8FC'
-    },
     android: {
       package: 'com.sixmediasa.unifill',
       versionCode: 1,
@@ -33,6 +28,15 @@ export default ({ config }: ConfigContext): ExpoConfig => {
     },
     plugins: [
       'expo-router',
+      [
+        'expo-splash-screen',
+        {
+          image: './assets/splash-icon.png',
+          imageWidth: 200,
+          resizeMode: 'contain',
+          backgroundColor: '#F7F8FC'
+        }
+      ],
       'expo-notifications',
       [
         'expo-build-properties',
