@@ -38,6 +38,49 @@ jobs:
           cp assets/logo-horizontal.png assets/adaptive-icon.png
           test -f package.json
 
+      - name: Apply production-safe startup router fix
+        shell: bash
+        run: |
+          cat > appsrc/app/index.tsx <<'EOF'
+          import React, { useEffect, useState } from 'react';
+          import { router } from 'expo-router';
+          import { setting } from '@/src/db/database';
+          import { Loading, Screen } from '@/src/components/UI';
+
+          export default function Index() {
+            const [destination, setDestination] = useState<'/(tabs)' | '/onboarding' | null>(null);
+
+            useEffect(() => {
+              let mounted = true;
+
+              async function bootstrap() {
+                try {
+                  const complete = await setting('onboarding_complete', '0');
+                  if (!mounted) return;
+                  setDestination(complete === '1' ? '/(tabs)' : '/onboarding');
+                } catch {
+                  if (mounted) setDestination('/onboarding');
+                }
+              }
+
+              bootstrap();
+              return () => {
+                mounted = false;
+              };
+            }, []);
+
+            useEffect(() => {
+              if (destination) router.replace(destination);
+            }, [destination]);
+
+            return (
+              <Screen>
+                <Loading />
+              </Screen>
+            );
+          }
+          EOF
+
       - name: Setup Node.js
         uses: actions/setup-node@v4
         with:
@@ -51,7 +94,7 @@ jobs:
 
       - name: Install dependencies
         working-directory: appsrc
-        run: npm install
+        run: npm install --no-audit --no-fund
 
       - name: Align Expo dependencies
         working-directory: appsrc
@@ -73,13 +116,13 @@ jobs:
         shell: bash
         run: |
           set -euo pipefail
-          cp appsrc/android/app/build/outputs/apk/debug/app-debug.apk Unifill-v1.0.0-test.apk
-          ls -lh Unifill-v1.0.0-test.apk
+          cp appsrc/android/app/build/outputs/apk/debug/app-debug.apk Unifill-v1.0.0-router-fixed-test.apk
+          ls -lh Unifill-v1.0.0-router-fixed-test.apk
 
       - name: Upload test APK
         uses: actions/upload-artifact@v4
         with:
-          name: Unifill-v1.0.0-test
-          path: Unifill-v1.0.0-test.apk
+          name: Unifill-v1.0.0-router-fixed-test
+          path: Unifill-v1.0.0-router-fixed-test.apk
           if-no-files-found: error
           retention-days: 14
