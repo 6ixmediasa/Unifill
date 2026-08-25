@@ -23,12 +23,15 @@ jobs:
       - name: Checkout
         uses: actions/checkout@v4
 
-      - name: Extract validated Unifill source
+      - name: Reconstruct validated Unifill source
         shell: bash
         run: |
           set -euo pipefail
+          base64 --decode .ci/unifill-source-router-fixed.tar.xz.b64 > /tmp/unifill-source-router-fixed.tar.xz
+          echo "2642aff4c0b8bb8c8e1864d1129217197dea0e19a97f2e9d771e44bea218aed5  /tmp/unifill-source-router-fixed.tar.xz" | sha256sum -c -
+          xz -t /tmp/unifill-source-router-fixed.tar.xz
           mkdir -p appsrc
-          tar -xJf .ci/unifill-source-router-fixed.tar.xz -C appsrc
+          tar -xJf /tmp/unifill-source-router-fixed.tar.xz -C appsrc
           cd appsrc
           mkdir -p assets
           cp assets/logo-horizontal.png assets/icon.png
