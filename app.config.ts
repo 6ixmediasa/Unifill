@@ -15,12 +15,12 @@ export default ({ config }: ConfigContext): ExpoConfig => {
     version: '1.0.0',
     orientation: 'portrait',
     userInterfaceStyle: 'automatic',
-    icon: './assets/icon.png',
+    icon: './assets/logo-horizontal.png',
     android: {
       package: 'com.sixmediasa.unifill',
       versionCode: 1,
       adaptiveIcon: {
-        foregroundImage: './assets/adaptive-icon.png',
+        foregroundImage: './assets/logo-horizontal.png',
         backgroundColor: '#F7F8FC'
       },
       permissions: ['POST_NOTIFICATIONS'],
@@ -31,7 +31,7 @@ export default ({ config }: ConfigContext): ExpoConfig => {
       [
         'expo-splash-screen',
         {
-          image: './assets/splash-icon.png',
+          image: './assets/logo-horizontal.png',
           imageWidth: 200,
           resizeMode: 'contain',
           backgroundColor: '#F7F8FC'
