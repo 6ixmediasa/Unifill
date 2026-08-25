@@ -16,32 +16,26 @@ jobs:
     env:
       CI: "true"
       APP_ENV: development
+
     steps:
       - name: Checkout
         uses: actions/checkout@v4
 
-      - name: Reconstruct validated Unifill source
+      - name: Validate visible source
         shell: bash
         run: |
           set -euo pipefail
-          cat .ci/router-fixed.part00 .ci/router-fixed.part01 .ci/router-fixed.part02 .ci/router-fixed.part03 .ci/router-fixed.part04 .ci/router-fixed.part05 > /tmp/unifill-source-router-fixed.tar.xz.b64
-          base64 --decode /tmp/unifill-source-router-fixed.tar.xz.b64 > /tmp/unifill-source-router-fixed.tar.xz
-          echo "2642aff4c0b8bb8c8e1864d1129217197dea0e19a97f2e9d771e44bea218aed5  /tmp/unifill-source-router-fixed.tar.xz" | sha256sum -c -
-          xz -t /tmp/unifill-source-router-fixed.tar.xz
-          mkdir -p appsrc
-          tar -xJf /tmp/unifill-source-router-fixed.tar.xz -C appsrc
-          cd appsrc
-          mkdir -p assets
-          cp assets/logo-horizontal.png assets/icon.png
-          cp assets/logo-horizontal.png assets/splash-icon.png
-          cp assets/logo-horizontal.png assets/adaptive-icon.png
           test -f package.json
           test -f app/index.tsx
+          test -f assets/logo-horizontal.png
           grep -q "router.replace" app/index.tsx
           if grep -q "<Redirect" app/index.tsx; then
             echo "Legacy Expo Router Redirect startup code is still present."
             exit 1
           fi
+          cp assets/logo-horizontal.png assets/icon.png
+          cp assets/logo-horizontal.png assets/splash-icon.png
+          cp assets/logo-horizontal.png assets/adaptive-icon.png
 
       - name: Setup Node.js
         uses: actions/setup-node@v4
@@ -55,36 +49,33 @@ jobs:
           java-version: "17"
 
       - name: Install dependencies
-        working-directory: appsrc
         run: npm install --no-audit --no-fund
 
       - name: Align Expo dependencies
-        working-directory: appsrc
         run: npx expo install --fix
 
       - name: Type check
-        working-directory: appsrc
         run: npm run typecheck
 
       - name: Generate Android project
-        working-directory: appsrc
         run: npx expo prebuild --platform android --clean
 
       - name: Build debug APK
-        working-directory: appsrc/android
+        working-directory: android
         run: ./gradlew assembleDebug --no-daemon
 
       - name: Stage APK
         shell: bash
         run: |
           set -euo pipefail
-          cp appsrc/android/app/build/outputs/apk/debug/app-debug.apk Unifill-v1.0.0-router-fixed-test.apk
-          ls -lh Unifill-v1.0.0-router-fixed-test.apk
+          cp android/app/build/outputs/apk/debug/app-debug.apk Unifill-v1.0.0-test.apk
+          test -s Unifill-v1.0.0-test.apk
+          ls -lh Unifill-v1.0.0-test.apk
 
       - name: Upload test APK
         uses: actions/upload-artifact@v4
         with:
-          name: Unifill-v1.0.0-router-fixed-test
-          path: Unifill-v1.0.0-router-fixed-test.apk
+          name: Unifill-v1.0.0-test
+          path: Unifill-v1.0.0-test.apk
           if-no-files-found: error
           retention-days: 14
