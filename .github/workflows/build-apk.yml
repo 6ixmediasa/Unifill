@@ -5,9 +5,6 @@ on:
   push:
     branches:
       - main
-  pull_request:
-    branches:
-      - main
 
 permissions:
   contents: read
@@ -27,7 +24,8 @@ jobs:
         shell: bash
         run: |
           set -euo pipefail
-          base64 --decode .ci/unifill-source-router-fixed.tar.xz.b64 > /tmp/unifill-source-router-fixed.tar.xz
+          cat .ci/router-fixed.part00 .ci/router-fixed.part01 .ci/router-fixed.part02 .ci/router-fixed.part03 .ci/router-fixed.part04 .ci/router-fixed.part05 > /tmp/unifill-source-router-fixed.tar.xz.b64
+          base64 --decode /tmp/unifill-source-router-fixed.tar.xz.b64 > /tmp/unifill-source-router-fixed.tar.xz
           echo "2642aff4c0b8bb8c8e1864d1129217197dea0e19a97f2e9d771e44bea218aed5  /tmp/unifill-source-router-fixed.tar.xz" | sha256sum -c -
           xz -t /tmp/unifill-source-router-fixed.tar.xz
           mkdir -p appsrc
