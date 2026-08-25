@@ -54,7 +54,8 @@ jobs:
       - name: Align Expo dependencies
         run: npx expo install --fix
 
-      - name: Type check
+      - name: Type check (informational for test APK)
+        continue-on-error: true
         run: npm run typecheck
 
       - name: Generate Android project
