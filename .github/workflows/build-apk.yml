@@ -17,8 +17,6 @@ jobs:
     timeout-minutes: 60
     env:
       CI: "true"
-      NODE_ENV: production
-      APP_ENV: development
       EXPO_NO_TELEMETRY: "1"
 
     steps:
@@ -37,7 +35,7 @@ jobs:
           java-version: "17"
 
       - name: Install dependencies
-        run: npm install --no-audit --no-fund
+        run: npm install --include=dev --no-audit --no-fund
 
       - name: Generate launcher icons from logo symbol
         shell: bash
@@ -60,25 +58,19 @@ jobs:
                   if r > 247 and g > 247 and b > 247:
                       px[x, y] = (255, 255, 255, 0)
 
-          def scale_to_height(img, height):
+          def scaled(img, height):
               width = round(img.width * height / img.height)
               return img.resize((width, height), Image.Resampling.LANCZOS)
 
           legacy = Image.new('RGBA', (1024, 1024), (255, 255, 255, 255))
-          legacy_symbol = scale_to_height(symbol, 700)
-          legacy.alpha_composite(
-              legacy_symbol,
-              ((1024 - legacy_symbol.width) // 2, (1024 - legacy_symbol.height) // 2)
-          )
-          legacy.convert('RGB').save('assets/icon.png', format='PNG', optimize=False)
+          mark = scaled(symbol, 700)
+          legacy.alpha_composite(mark, ((1024 - mark.width) // 2, (1024 - mark.height) // 2))
+          legacy.convert('RGB').save('assets/icon.png', format='PNG')
 
           adaptive = Image.new('RGBA', (1024, 1024), (0, 0, 0, 0))
-          adaptive_symbol = scale_to_height(symbol, 610)
-          adaptive.alpha_composite(
-              adaptive_symbol,
-              ((1024 - adaptive_symbol.width) // 2, (1024 - adaptive_symbol.height) // 2)
-          )
-          adaptive.save('assets/adaptive-icon.png', format='PNG', optimize=False)
+          mark = scaled(symbol, 610)
+          adaptive.alpha_composite(mark, ((1024 - mark.width) // 2, (1024 - mark.height) // 2))
+          adaptive.save('assets/adaptive-icon.png', format='PNG')
           PY
 
       - name: Verify Expo dependency compatibility
@@ -87,14 +79,14 @@ jobs:
       - name: Type check
         run: npm run typecheck
 
-      - name: Generate Android project
+      - name: Generate clean Android project
         run: npx expo prebuild --platform android --clean --no-install
 
       - name: Build release APK for phone and emulator
         working-directory: android
         run: ./gradlew assembleRelease -PreactNativeArchitectures=arm64-v8a,x86_64 --no-daemon --stacktrace
 
-      - name: Validate and stage APK
+      - name: Validate APK
         shell: bash
         run: |
           set -euo pipefail
@@ -110,16 +102,16 @@ jobs:
               assert any(n.startswith('lib/arm64-v8a/') and n.endswith('.so') for n in names)
               assert any(n.startswith('lib/x86_64/') and n.endswith('.so') for n in names)
               assert any(n.endswith('classes.dex') for n in names)
-          print('APK structure and both ABIs validated')
+          print('APK validated for arm64-v8a and x86_64')
           PY
-          cp "$APK" Unifill-v1.0.0-launchfix.apk
-          sha256sum Unifill-v1.0.0-launchfix.apk
-          ls -lh Unifill-v1.0.0-launchfix.apk
+          cp "$APK" Unifill-v1.1.0-clean-rebuild.apk
+          sha256sum Unifill-v1.1.0-clean-rebuild.apk
+          ls -lh Unifill-v1.1.0-clean-rebuild.apk
 
       - name: Upload APK
         uses: actions/upload-artifact@v4
         with:
-          name: Unifill-v1.0.0-launchfix
-          path: Unifill-v1.0.0-launchfix.apk
+          name: Unifill-v1.1.0-clean-rebuild
+          path: Unifill-v1.1.0-clean-rebuild.apk
           if-no-files-found: error
           retention-days: 14

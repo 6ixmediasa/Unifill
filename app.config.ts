@@ -1,17 +1,18 @@
-import type { ExpoConfig, ConfigContext } from 'expo/config';
+import type { ConfigContext, ExpoConfig } from 'expo/config';
 
 export default ({ config }: ConfigContext): ExpoConfig => ({
   ...config,
   name: 'Unifill',
   slug: 'unifill',
   scheme: 'unifill',
-  version: '1.0.0',
+  version: '1.1.0',
   orientation: 'portrait',
-  userInterfaceStyle: 'automatic',
+  userInterfaceStyle: 'light',
+  jsEngine: 'hermes',
   icon: './assets/icon.png',
   android: {
     package: 'com.sixmediasa.unifill',
-    versionCode: 4,
+    versionCode: 5,
     adaptiveIcon: {
       foregroundImage: './assets/adaptive-icon.png',
       backgroundColor: '#FFFFFF'
@@ -19,19 +20,17 @@ export default ({ config }: ConfigContext): ExpoConfig => ({
     blockedPermissions: ['CAMERA', 'RECORD_AUDIO', 'READ_MEDIA_VIDEO']
   },
   plugins: [
-    'expo-router',
     [
       'expo-splash-screen',
       {
         image: './assets/logo-horizontal.png',
         imageWidth: 200,
         resizeMode: 'contain',
-        backgroundColor: '#F7F8FC'
+        backgroundColor: '#F6F8FB'
       }
     ]
   ],
   extra: {
-    eas: { projectId: process.env.EAS_PROJECT_ID || undefined },
-    appEnv: 'development'
+    appEnv: 'production'
   }
 });
