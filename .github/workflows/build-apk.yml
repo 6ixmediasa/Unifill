@@ -104,14 +104,14 @@ jobs:
               assert any(n.endswith('classes.dex') for n in names)
           print('APK validated for arm64-v8a and x86_64')
           PY
-          cp "$APK" Unifill-v1.1.0-clean-rebuild.apk
-          sha256sum Unifill-v1.1.0-clean-rebuild.apk
-          ls -lh Unifill-v1.1.0-clean-rebuild.apk
+          cp "$APK" Unifill-v1.1.1-bottom-nav-fix.apk
+          sha256sum Unifill-v1.1.1-bottom-nav-fix.apk
+          ls -lh Unifill-v1.1.1-bottom-nav-fix.apk
 
       - name: Upload APK
         uses: actions/upload-artifact@v4
         with:
-          name: Unifill-v1.1.0-clean-rebuild
-          path: Unifill-v1.1.0-clean-rebuild.apk
+          name: Unifill-v1.1.1-bottom-nav-fix
+          path: Unifill-v1.1.1-bottom-nav-fix.apk
           if-no-files-found: error
           retention-days: 14
