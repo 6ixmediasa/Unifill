@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useEffect, useState } from 'react';
 import {
   Image,
   KeyboardTypeOptions,
@@ -14,11 +14,50 @@ import {
   ViewStyle
 } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
+import mobileAds, { BannerAd, BannerAdSize, TestIds } from 'react-native-google-mobile-ads';
 import { palette } from './theme';
 
 export const topInset = Platform.OS === 'android' ? NativeStatusBar.currentHeight ?? 0 : 0;
 export const bottomNavInset = Platform.OS === 'android' ? 30 : 18;
 export const bottomTabHeight = 62 + bottomNavInset;
+
+let adsInitPromise: Promise<unknown> | null = null;
+function initializeTestAds() {
+  if (!adsInitPromise) {
+    adsInitPromise = mobileAds()
+      .setRequestConfiguration({ testDeviceIdentifiers: ['EMULATOR'] })
+      .then(() => mobileAds().initialize());
+  }
+  return adsInitPromise;
+}
+
+function TestAdBanner() {
+  const [state, setState] = useState<'initializing' | 'loading' | 'loaded' | 'error'>('initializing');
+  useEffect(() => {
+    let mounted = true;
+    initializeTestAds()
+      .then(() => { if (mounted) setState('loading'); })
+      .catch(() => { if (mounted) setState('error'); });
+    return () => { mounted = false; };
+  }, []);
+
+  return (
+    <View style={styles.adWrap}>
+      <Text style={styles.adLabel}>GOOGLE TEST AD</Text>
+      {state === 'initializing' ? <Text style={styles.adStatus}>Initializing Google Mobile Ads…</Text> : null}
+      {state === 'error' ? <Text style={styles.adError}>Test ad unavailable — check the network.</Text> : null}
+      {state === 'loading' || state === 'loaded' ? (
+        <BannerAd
+          unitId={TestIds.BANNER}
+          size={BannerAdSize.BANNER}
+          requestOptions={{ requestNonPersonalizedAdsOnly: true }}
+          onAdLoaded={() => setState('loaded')}
+          onAdFailedToLoad={() => setState('error')}
+        />
+      ) : null}
+    </View>
+  );
+}
 
 export function Screen({ children, scroll = true }: { children: React.ReactNode; scroll?: boolean }) {
   if (!scroll) {
@@ -154,17 +193,20 @@ const tabs: { key: TabKey; label: string; icon: IconName; active: IconName }[] =
 
 export function BottomTabs({ active, onChange }: { active: TabKey; onChange: (tab: TabKey) => void }) {
   return (
-    <View style={[styles.tabBar, { height: bottomTabHeight, paddingBottom: bottomNavInset }]}>
-      {tabs.map((tab) => {
-        const selected = tab.key === active;
-        const color = selected ? palette.primary : '#526176';
-        return (
-          <Pressable key={tab.key} onPress={() => onChange(tab.key)} style={styles.tabButton}>
-            <Ionicons name={selected ? tab.active : tab.icon} size={23} color={color} />
-            <Text style={[styles.tabLabel, { color }, selected && { fontWeight: '900' }]}>{tab.label}</Text>
-          </Pressable>
-        );
-      })}
+    <View style={styles.bottomArea}>
+      {active === 'home' ? <TestAdBanner /> : null}
+      <View style={[styles.tabBar, { height: bottomTabHeight, paddingBottom: bottomNavInset }]}>
+        {tabs.map((tab) => {
+          const selected = tab.key === active;
+          const color = selected ? palette.primary : '#526176';
+          return (
+            <Pressable key={tab.key} onPress={() => onChange(tab.key)} style={styles.tabButton}>
+              <Ionicons name={selected ? tab.active : tab.icon} size={23} color={color} />
+              <Text style={[styles.tabLabel, { color }, selected && { fontWeight: '900' }]}>{tab.label}</Text>
+            </Pressable>
+          );
+        })}
+      </View>
     </View>
   );
 }
@@ -223,7 +265,12 @@ const styles = StyleSheet.create({
   input: { minHeight: 50, borderWidth: 1, borderColor: palette.border, backgroundColor: palette.surface, borderRadius: 14, paddingHorizontal: 14, paddingVertical: 12, color: palette.text, fontSize: 15 },
   emptyIcon: { width: 58, height: 58, borderRadius: 18, backgroundColor: palette.primarySoft, alignItems: 'center', justifyContent: 'center', marginBottom: 12 },
   emptyTitle: { color: palette.text, fontWeight: '900', fontSize: 17, marginBottom: 4 },
-  tabBar: { position: 'absolute', left: 0, right: 0, bottom: 0, paddingTop: 8, backgroundColor: palette.surface, borderTopWidth: 1, borderTopColor: palette.border, flexDirection: 'row', alignItems: 'stretch' },
+  bottomArea: { backgroundColor: palette.surface },
+  adWrap: { minHeight: 72, backgroundColor: '#FAFBFD', borderTopWidth: 1, borderTopColor: palette.border, alignItems: 'center', justifyContent: 'center', paddingTop: 4, paddingBottom: 6, gap: 2 },
+  adLabel: { color: palette.muted, fontSize: 9, fontWeight: '900', letterSpacing: 0.8 },
+  adStatus: { color: palette.muted, fontSize: 11, fontWeight: '700', paddingVertical: 12 },
+  adError: { color: palette.danger, fontSize: 11, fontWeight: '700', paddingVertical: 12 },
+  tabBar: { paddingTop: 8, backgroundColor: palette.surface, borderTopWidth: 1, borderTopColor: palette.border, flexDirection: 'row', alignItems: 'stretch' },
   tabButton: { flex: 1, alignItems: 'center', justifyContent: 'center', gap: 3, minWidth: 0 },
   tabLabel: { fontSize: 10, fontWeight: '800' },
   row: { minHeight: 62, flexDirection: 'row', alignItems: 'center', gap: 12, paddingVertical: 8 },
