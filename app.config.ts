@@ -5,14 +5,14 @@ export default ({ config }: ConfigContext): ExpoConfig => ({
   name: 'Unifill',
   slug: 'unifill',
   scheme: 'unifill',
-  version: '1.1.1',
+  version: '1.1.2',
   orientation: 'portrait',
   userInterfaceStyle: 'light',
   jsEngine: 'hermes',
   icon: './assets/icon.png',
   android: {
     package: 'com.sixmediasa.unifill',
-    versionCode: 6,
+    versionCode: 7,
     adaptiveIcon: {
       foregroundImage: './assets/adaptive-icon.png',
       backgroundColor: '#FFFFFF'
@@ -20,6 +20,13 @@ export default ({ config }: ConfigContext): ExpoConfig => ({
     blockedPermissions: ['CAMERA', 'RECORD_AUDIO', 'READ_MEDIA_VIDEO']
   },
   plugins: [
+    [
+      'react-native-google-mobile-ads',
+      {
+        androidAppId: 'ca-app-pub-3940256099942544~3347511713',
+        iosAppId: 'ca-app-pub-3940256099942544~1458002511'
+      }
+    ],
     [
       'expo-splash-screen',
       {
@@ -31,6 +38,6 @@ export default ({ config }: ConfigContext): ExpoConfig => ({
     ]
   ],
   extra: {
-    appEnv: 'production'
+    appEnv: 'test-ads'
   }
 });
