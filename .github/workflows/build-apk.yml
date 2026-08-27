@@ -82,6 +82,12 @@ jobs:
       - name: Generate clean Android project
         run: npx expo prebuild --platform android --clean --no-install
 
+      - name: Verify AdMob test configuration
+        shell: bash
+        run: |
+          grep -R "ca-app-pub-3940256099942544~3347511713" android/app/src/main/AndroidManifest.xml
+          grep -R "com.google.android.gms.ads.APPLICATION_ID" android/app/src/main/AndroidManifest.xml
+
       - name: Build release APK for phone and emulator
         working-directory: android
         run: ./gradlew assembleRelease -PreactNativeArchitectures=arm64-v8a,x86_64 --no-daemon --stacktrace
@@ -104,14 +110,14 @@ jobs:
               assert any(n.endswith('classes.dex') for n in names)
           print('APK validated for arm64-v8a and x86_64')
           PY
-          cp "$APK" Unifill-v1.1.1-bottom-nav-fix.apk
-          sha256sum Unifill-v1.1.1-bottom-nav-fix.apk
-          ls -lh Unifill-v1.1.1-bottom-nav-fix.apk
+          cp "$APK" Unifill-v1.1.2-admob-test.apk
+          sha256sum Unifill-v1.1.2-admob-test.apk
+          ls -lh Unifill-v1.1.2-admob-test.apk
 
       - name: Upload APK
         uses: actions/upload-artifact@v4
         with:
-          name: Unifill-v1.1.1-bottom-nav-fix
-          path: Unifill-v1.1.1-bottom-nav-fix.apk
+          name: Unifill-v1.1.2-admob-test
+          path: Unifill-v1.1.2-admob-test.apk
           if-no-files-found: error
           retention-days: 14
