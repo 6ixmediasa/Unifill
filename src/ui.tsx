@@ -17,6 +17,8 @@ import { Ionicons } from '@expo/vector-icons';
 import { palette } from './theme';
 
 export const topInset = Platform.OS === 'android' ? NativeStatusBar.currentHeight ?? 0 : 0;
+export const bottomNavInset = Platform.OS === 'android' ? 30 : 18;
+export const bottomTabHeight = 62 + bottomNavInset;
 
 export function Screen({ children, scroll = true }: { children: React.ReactNode; scroll?: boolean }) {
   if (!scroll) {
@@ -152,13 +154,14 @@ const tabs: { key: TabKey; label: string; icon: IconName; active: IconName }[] =
 
 export function BottomTabs({ active, onChange }: { active: TabKey; onChange: (tab: TabKey) => void }) {
   return (
-    <View style={styles.tabBar}>
+    <View style={[styles.tabBar, { height: bottomTabHeight, paddingBottom: bottomNavInset }]}>
       {tabs.map((tab) => {
         const selected = tab.key === active;
+        const color = selected ? palette.primary : '#526176';
         return (
           <Pressable key={tab.key} onPress={() => onChange(tab.key)} style={styles.tabButton}>
-            <Ionicons name={selected ? tab.active : tab.icon} size={22} color={selected ? palette.primary : palette.muted} />
-            <Text style={[styles.tabLabel, selected && { color: palette.primary, fontWeight: '800' }]}>{tab.label}</Text>
+            <Ionicons name={selected ? tab.active : tab.icon} size={23} color={color} />
+            <Text style={[styles.tabLabel, { color }, selected && { fontWeight: '900' }]}>{tab.label}</Text>
           </Pressable>
         );
       })}
@@ -220,9 +223,9 @@ const styles = StyleSheet.create({
   input: { minHeight: 50, borderWidth: 1, borderColor: palette.border, backgroundColor: palette.surface, borderRadius: 14, paddingHorizontal: 14, paddingVertical: 12, color: palette.text, fontSize: 15 },
   emptyIcon: { width: 58, height: 58, borderRadius: 18, backgroundColor: palette.primarySoft, alignItems: 'center', justifyContent: 'center', marginBottom: 12 },
   emptyTitle: { color: palette.text, fontWeight: '900', fontSize: 17, marginBottom: 4 },
-  tabBar: { position: 'absolute', left: 0, right: 0, bottom: 0, minHeight: 76, paddingBottom: Platform.OS === 'ios' ? 16 : 8, backgroundColor: palette.surface, borderTopWidth: 1, borderTopColor: palette.border, flexDirection: 'row', alignItems: 'center' },
-  tabButton: { flex: 1, alignItems: 'center', justifyContent: 'center', gap: 4, paddingTop: 8 },
-  tabLabel: { color: palette.muted, fontSize: 10, fontWeight: '700' },
+  tabBar: { position: 'absolute', left: 0, right: 0, bottom: 0, paddingTop: 8, backgroundColor: palette.surface, borderTopWidth: 1, borderTopColor: palette.border, flexDirection: 'row', alignItems: 'stretch' },
+  tabButton: { flex: 1, alignItems: 'center', justifyContent: 'center', gap: 3, minWidth: 0 },
+  tabLabel: { fontSize: 10, fontWeight: '800' },
   row: { minHeight: 62, flexDirection: 'row', alignItems: 'center', gap: 12, paddingVertical: 8 },
   rowIcon: { width: 40, height: 40, borderRadius: 13, backgroundColor: palette.primarySoft, alignItems: 'center', justifyContent: 'center' },
   rowTitle: { color: palette.text, fontWeight: '800', fontSize: 15 }
