@@ -5,14 +5,14 @@ export default ({ config }: ConfigContext): ExpoConfig => ({
   name: 'Unifill',
   slug: 'unifill',
   scheme: 'unifill',
-  version: '1.1.0',
+  version: '1.1.1',
   orientation: 'portrait',
   userInterfaceStyle: 'light',
   jsEngine: 'hermes',
   icon: './assets/icon.png',
   android: {
     package: 'com.sixmediasa.unifill',
-    versionCode: 5,
+    versionCode: 6,
     adaptiveIcon: {
       foregroundImage: './assets/adaptive-icon.png',
       backgroundColor: '#FFFFFF'
