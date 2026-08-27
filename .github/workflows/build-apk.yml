@@ -14,10 +14,10 @@ permissions:
 jobs:
   build-apk:
     runs-on: ubuntu-24.04
-    timeout-minutes: 45
+    timeout-minutes: 60
     env:
       CI: "true"
-      NODE_ENV: development
+      NODE_ENV: production
       APP_ENV: development
       EXPO_NO_TELEMETRY: "1"
 
@@ -39,25 +39,46 @@ jobs:
       - name: Install dependencies
         run: npm install --no-audit --no-fund
 
-      - name: Generate icon-only launcher asset
+      - name: Generate launcher icons from logo symbol
         shell: bash
         run: |
           python3 -m pip install --quiet pillow
           python3 - <<'PY'
           from PIL import Image, ImageChops
-          src = Image.open('assets/logo-horizontal.png').convert('RGB')
-          rough = src.crop((150, 150, 325, 345))
-          white = Image.new('RGB', rough.size, 'white')
-          diff = ImageChops.difference(rough, white)
-          bbox = diff.getbbox() or (0, 0, rough.width, rough.height)
+
+          src = Image.open('assets/logo-horizontal.png').convert('RGBA')
+          rough = src.crop((150, 145, 325, 350)).convert('RGBA')
+          rgb = rough.convert('RGB')
+          white = Image.new('RGB', rgb.size, 'white')
+          bbox = ImageChops.difference(rgb, white).getbbox() or (0, 0, rough.width, rough.height)
           symbol = rough.crop(bbox)
-          symbol.thumbnail((700, 700), Image.Resampling.LANCZOS)
-          canvas = Image.new('RGB', (1024, 1024), 'white')
-          x = (1024 - symbol.width) // 2
-          y = (1024 - symbol.height) // 2
-          canvas.paste(symbol, (x, y))
-          canvas.save('assets/icon.png', format='PNG', optimize=False)
-          canvas.save('assets/adaptive-icon.png', format='PNG', optimize=False)
+
+          px = symbol.load()
+          for y in range(symbol.height):
+              for x in range(symbol.width):
+                  r, g, b, a = px[x, y]
+                  if r > 247 and g > 247 and b > 247:
+                      px[x, y] = (255, 255, 255, 0)
+
+          def scale_to_height(img, height):
+              width = round(img.width * height / img.height)
+              return img.resize((width, height), Image.Resampling.LANCZOS)
+
+          legacy = Image.new('RGBA', (1024, 1024), (255, 255, 255, 255))
+          legacy_symbol = scale_to_height(symbol, 700)
+          legacy.alpha_composite(
+              legacy_symbol,
+              ((1024 - legacy_symbol.width) // 2, (1024 - legacy_symbol.height) // 2)
+          )
+          legacy.convert('RGB').save('assets/icon.png', format='PNG', optimize=False)
+
+          adaptive = Image.new('RGBA', (1024, 1024), (0, 0, 0, 0))
+          adaptive_symbol = scale_to_height(symbol, 610)
+          adaptive.alpha_composite(
+              adaptive_symbol,
+              ((1024 - adaptive_symbol.width) // 2, (1024 - adaptive_symbol.height) // 2)
+          )
+          adaptive.save('assets/adaptive-icon.png', format='PNG', optimize=False)
           PY
 
       - name: Verify Expo dependency compatibility
@@ -69,24 +90,36 @@ jobs:
       - name: Generate Android project
         run: npx expo prebuild --platform android --clean --no-install
 
-      - name: Build standalone release APK
+      - name: Build release APK for phone and emulator
         working-directory: android
-        run: ./gradlew assembleRelease -PreactNativeArchitectures=arm64-v8a --no-daemon --stacktrace
+        run: ./gradlew assembleRelease -PreactNativeArchitectures=arm64-v8a,x86_64 --no-daemon --stacktrace
 
-      - name: Stage APK
+      - name: Validate and stage APK
         shell: bash
         run: |
           set -euo pipefail
           APK="android/app/build/outputs/apk/release/app-release.apk"
           test -s "$APK"
-          cp "$APK" Unifill-v1.0.0-launchsafe.apk
-          sha256sum Unifill-v1.0.0-launchsafe.apk
-          ls -lh Unifill-v1.0.0-launchsafe.apk
+          python3 - <<'PY'
+          import zipfile
+          apk = 'android/app/build/outputs/apk/release/app-release.apk'
+          with zipfile.ZipFile(apk) as z:
+              names = set(z.namelist())
+              assert 'AndroidManifest.xml' in names
+              assert 'assets/index.android.bundle' in names
+              assert any(n.startswith('lib/arm64-v8a/') and n.endswith('.so') for n in names)
+              assert any(n.startswith('lib/x86_64/') and n.endswith('.so') for n in names)
+              assert any(n.endswith('classes.dex') for n in names)
+          print('APK structure and both ABIs validated')
+          PY
+          cp "$APK" Unifill-v1.0.0-launchfix.apk
+          sha256sum Unifill-v1.0.0-launchfix.apk
+          ls -lh Unifill-v1.0.0-launchfix.apk
 
       - name: Upload APK
         uses: actions/upload-artifact@v4
         with:
-          name: Unifill-v1.0.0-launchsafe
-          path: Unifill-v1.0.0-launchsafe.apk
+          name: Unifill-v1.0.0-launchfix
+          path: Unifill-v1.0.0-launchfix.apk
           if-no-files-found: error
           retention-days: 14

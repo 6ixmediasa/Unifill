@@ -11,12 +11,11 @@ export default ({ config }: ConfigContext): ExpoConfig => ({
   icon: './assets/icon.png',
   android: {
     package: 'com.sixmediasa.unifill',
-    versionCode: 3,
+    versionCode: 4,
     adaptiveIcon: {
       foregroundImage: './assets/adaptive-icon.png',
       backgroundColor: '#FFFFFF'
     },
-    permissions: ['POST_NOTIFICATIONS'],
     blockedPermissions: ['CAMERA', 'RECORD_AUDIO', 'READ_MEDIA_VIDEO']
   },
   plugins: [
@@ -28,15 +27,6 @@ export default ({ config }: ConfigContext): ExpoConfig => ({
         imageWidth: 200,
         resizeMode: 'contain',
         backgroundColor: '#F7F8FC'
-      }
-    ],
-    'expo-notifications',
-    [
-      'expo-build-properties',
-      {
-        android: {
-          extraProguardRules: ''
-        }
       }
     ]
   ],
