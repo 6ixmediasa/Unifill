@@ -39,6 +39,27 @@ jobs:
       - name: Install dependencies
         run: npm install --no-audit --no-fund
 
+      - name: Generate icon-only launcher asset
+        shell: bash
+        run: |
+          python3 -m pip install --quiet pillow
+          python3 - <<'PY'
+          from PIL import Image, ImageChops
+          src = Image.open('assets/logo-horizontal.png').convert('RGB')
+          rough = src.crop((150, 150, 325, 345))
+          white = Image.new('RGB', rough.size, 'white')
+          diff = ImageChops.difference(rough, white)
+          bbox = diff.getbbox() or (0, 0, rough.width, rough.height)
+          symbol = rough.crop(bbox)
+          symbol.thumbnail((700, 700), Image.Resampling.LANCZOS)
+          canvas = Image.new('RGB', (1024, 1024), 'white')
+          x = (1024 - symbol.width) // 2
+          y = (1024 - symbol.height) // 2
+          canvas.paste(symbol, (x, y))
+          canvas.save('assets/icon.png', format='PNG', optimize=False)
+          canvas.save('assets/adaptive-icon.png', format='PNG', optimize=False)
+          PY
+
       - name: Verify Expo dependency compatibility
         run: npx expo install --check
 
@@ -58,14 +79,14 @@ jobs:
           set -euo pipefail
           APK="android/app/build/outputs/apk/release/app-release.apk"
           test -s "$APK"
-          cp "$APK" Unifill-v1.0.0-test.apk
-          sha256sum Unifill-v1.0.0-test.apk
-          ls -lh Unifill-v1.0.0-test.apk
+          cp "$APK" Unifill-v1.0.0-launchsafe.apk
+          sha256sum Unifill-v1.0.0-launchsafe.apk
+          ls -lh Unifill-v1.0.0-launchsafe.apk
 
       - name: Upload APK
         uses: actions/upload-artifact@v4
         with:
-          name: Unifill-v1.0.0-test
-          path: Unifill-v1.0.0-test.apk
+          name: Unifill-v1.0.0-launchsafe
+          path: Unifill-v1.0.0-launchsafe.apk
           if-no-files-found: error
           retention-days: 14
